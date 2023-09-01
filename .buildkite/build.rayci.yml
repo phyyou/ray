@@ -24,12 +24,22 @@ steps:
     depends_on: manylinux
     job_env: manylinux
 
-  - label: ":tapioca: build: docker"
+  - label: ":tapioca: build: ray cu118 docker"
     instance_type: medium
     commands:
-      - bazel run //ci/ray_ci:build -- docker --python-version py38
+      - bazel run //ci/ray_ci:build -- docker --python-version py38 --platform cu118
     depends_on: 
       - manylinux
       - forge
-      - raypy38cu118base
+      - raycu118base
+    job_env: forge
+
+  - label: ":tapioca: build: ray gpu docker"
+    instance_type: medium
+    commands:
+      - bazel run //ci/ray_ci:build -- docker --python-version py38 --platform gpu
+    depends_on: 
+      - manylinux
+      - forge
+      - raygpubase
     job_env: forge

@@ -4,9 +4,14 @@ from ci.ray_ci.container import Container, _DOCKER_ECR_REPO
 from ci.ray_ci.build_container import PYTHON_VERSIONS
 from ci.ray_ci.utils import docker_pull
 
+PLATFORM = [
+    "cu118",
+    "gpu",
+]
+
 
 class DockerContainer(Container):
-    def __init__(self, python_version: str) -> None:
+    def __init__(self, python_version: str, platform: str) -> None:
         super().__init__(
             "forge",
             volumes=[
@@ -15,10 +20,12 @@ class DockerContainer(Container):
             ],
         )
         self.python_version = python_version
+        self.platform = platform
 
     def run(self) -> None:
         base_image = (
-            f"{_DOCKER_ECR_REPO}:{os.environ['RAYCI_BUILD_ID']}-raypy38cu118base"
+            f"{_DOCKER_ECR_REPO}:{os.environ['RAYCI_BUILD_ID']}"
+            f"-ray{self.python_version}{self.platform}base"
         )
         docker_pull(base_image)
         wheel_name = (
@@ -31,10 +38,11 @@ class DockerContainer(Container):
             if self.python_version == "py37"
             else "requirements_compiled.txt"
         )
+        ray_repo = "rayproject/ray-ml" if self.platform == "gpu" else "rayproject/ray"
         ray_image = (
-            "rayproject/ray:"
+            f"{ray_repo}:"
             f"{os.environ['BUILDKITE_COMMIT'][:6]}-"
-            f"{self.python_version}-cu118"
+            f"{self.python_version}-{self.platform}"
         )
         self.run_script(
             f"""
